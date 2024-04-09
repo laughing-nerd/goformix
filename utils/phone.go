@@ -1,8 +1,9 @@
 package utils
 
 import (
+	"fmt"
 	"regexp"
-	"strings"
+  "strings"
 )
 
 var dialCode = map[string]struct {
@@ -252,8 +253,11 @@ var dialCode = map[string]struct {
 }
 
 func ValidatePhone(dCode []string, val string) string {
-	if len(dCode) > 0 {
+	regex := regexp.MustCompile("[^a-zA-Z0-9+]+")
+	phoneVal := regex.ReplaceAllString(val, "")
+	fmt.Println(phoneVal)
 
+	if len(dCode) > 0 {
 		// Check if country exists
 		_, ok := dialCode[dCode[0]]
 		if !ok {
@@ -261,14 +265,14 @@ func ValidatePhone(dCode []string, val string) string {
 		}
 
 		// Check if phone number is valid
-		if len(val) != (dialCode[dCode[0]].Length+len(dialCode[dCode[0]].Code)) && !strings.HasPrefix(val, dialCode[dCode[0]].Code) {
+		if len(phoneVal) != (dialCode[dCode[0]].Length + len(dialCode[dCode[0]].Code)) && !strings.HasPrefix(val, dialCode[dCode[0]].Code) {
 			return "Invalid phone number"
 		}
 	}
-	pattern := `^(\+\d{1,2}\s?)?(\(\d{3}\)|\d{3})[-.\s]?\d{3}[-.\s]?\d{4}$`
+	pattern := `\+\d+$`
 	re := regexp.MustCompile(pattern)
-	if !re.MatchString(val) {
+	if !re.MatchString(phoneVal) {
 		return "Invalid phone number"
 	}
-  return ""
+	return ""
 }
