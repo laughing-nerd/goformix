@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"fmt"
 	"regexp"
-  "strings"
+	"strconv"
+	"strings"
 )
 
 var dialCode = map[string]struct {
@@ -253,26 +253,51 @@ var dialCode = map[string]struct {
 }
 
 func ValidatePhone(dCode []string, val string) string {
-	regex := regexp.MustCompile("[^a-zA-Z0-9+]+")
+	regex := regexp.MustCompile("\\s+")
 	phoneVal := regex.ReplaceAllString(val, "")
-	fmt.Println(phoneVal)
 
 	if len(dCode) > 0 {
-		// Check if country exists
-		_, ok := dialCode[dCode[0]]
-		if !ok {
-			return "Invalid country code"
+		l, isNumber := strconv.Atoi(dCode[0])
+		if isNumber != nil {
+			// If the user has not provided a number(length of input),then the user must have provided a country name
+			// Check if country exists
+			_, ok := dialCode[dCode[0]]
+			if !ok {
+				return "Invalid country code"
+			}
+
+			// Check if phone number is valid
+			if len(phoneVal) != (dialCode[dCode[0]].Length+len(dialCode[dCode[0]].Code)) && !strings.HasPrefix(val, dialCode[dCode[0]].Code) {
+				return "Invalid phone number"
+			}
 		}
 
-		// Check if phone number is valid
-		if len(phoneVal) != (dialCode[dCode[0]].Length + len(dialCode[dCode[0]].Code)) && !strings.HasPrefix(val, dialCode[dCode[0]].Code) {
+		var maxLen int
+		var err error
+
+		// Then there must be a min length and a max length
+		if len(dCode) == 2 {
+			maxLen, err = strconv.Atoi(dCode[1])
+			if err != nil {
+				return "Invalid max length"
+			}
+		}
+
+		// Simply ignore the case if max length provided is less than the min length
+		if maxLen < l {
+			maxLen = l
+		}
+
+		if len(phoneVal) < l || len(phoneVal) > maxLen {
 			return "Invalid phone number"
 		}
 	}
-	pattern := `\+\d+$`
-	re := regexp.MustCompile(pattern)
+
+	// pattern := `\d`
+	re := regexp.MustCompile("\\d")
 	if !re.MatchString(phoneVal) {
 		return "Invalid phone number"
 	}
+
 	return ""
 }
